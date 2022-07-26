@@ -51,8 +51,8 @@ pub fn calc_entropy(len: i32, pool_size: i32) -> f64{
     libm::log2(libm::pow(pool_size.into(), len.into()).into()).round()
 }
 
-pub fn generate_final<>() -> String{
-    let config: Config = Config::new(5, true, true, true, false);
+pub fn generate_final<>(config: Config) -> String{
+    //let config: Config = Config::new(5, true, true, true, false);
     let entropy = calc_entropy(config.len, config.chars.len() as i32);
     format_pass(generate_pass(&config), entropy)
 }
@@ -85,11 +85,11 @@ impl Config{
     pub fn parse(args: Vec<String>) -> Result<Config, &'static str>{
         //Parse an array of string primitives to a config. For example -l 16 -p uld wil result in a config of length 16 and with an uppercase, lowercase and digit pool
         //returns either the parsed Config or the default config
-        let (mut len, mut uppercase, mut lowercase, mut digits, mut special) = (12, false, false, false, false);
-        if args.len() < 1{
+        let (mut len, mut uppercase, mut lowercase, mut digits, mut special) = (12, true, true, true, false);
+        if args.len() <= 1{
             return Ok(Config::default());
         }
-        len = args[1].parse::<i32>().unwrap_or(len);
+        len = args[2].parse::<i32>().unwrap_or(12);
         if args.contains(&"-p".to_string()){
             (uppercase, lowercase, digits, special) = (false, false, false, false);
             let pool_i = args.iter().position(|x| {x == "-p"}).unwrap().to_owned();
