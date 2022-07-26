@@ -1,10 +1,10 @@
-use std::fs;
+#![allow(dead_code, unused_imports, unreachable_code, unused_variables, unused_mut)]
 
-use colored::Colorize;
+use std::fmt::Display;
+use std::fs;
 use rand::prelude::SliceRandom;
 use rand;
 use libm;
-#[allow(dead_code, unused_imports)]
 
 const DIGITS: [&'static str; 10] = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
 const LOWERCASE: [&'static str; 26] = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
@@ -12,11 +12,8 @@ const UPPERCASE: [&'static str; 26] = ["A", "B", "C", "D", "E", "F", "G", "H", "
 const SPECIAL: [&'static str; 9] = ["!", "$", "%", "(", ")", "/", "#", "+", "?"];
 
 pub fn generate_pass<'a>(config: &'a Config) -> String{
-    
-    /*let len = rand::thread_rng().gen_range(0..len)
-        .try_into()
-        .unwrap_or_else(|_| {5});*/
-    //Choose multiple chars from the provided array in the config using choose_multiple from SliceRandom
+    //Generate the random string
+
     let out: Vec<&'static str>  = config.chars.choose_multiple(
         &mut rand::thread_rng(),
         config.len.try_into().unwrap_or_else(|_| {
@@ -49,7 +46,7 @@ pub fn format_pass(pass: String, entropy: f64) -> String{
     format
 }
 
-pub fn calc_entropy<'a>(len: i32, pool_size: i32) -> f64{
+pub fn calc_entropy(len: i32, pool_size: i32) -> f64{
     //Calculate the passwords entropy (log(pow(poolSize, length), 2))
     libm::log2(libm::pow(pool_size.into(), len.into()).into()).round()
 }
@@ -60,7 +57,7 @@ pub fn generate_final<>() -> String{
     format_pass(generate_pass(&config), entropy)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Config{
     pub chars: Vec<&'static str>,
     pub len: i32,
@@ -83,5 +80,39 @@ impl Config{
         }
 
         Config { chars: Vec::from(final_chars), len: len }
+    }
+
+    pub fn parse(args: Vec<String>) -> Result<Config, &'static str>{
+        //Parse an array of string primitives to a config. For example -l 16 -p uld wil result in a config of length 16 and with an uppercase, lowercase and digit pool
+        //returns either the parsed Config or the default config
+        let (mut len, mut uppercase, mut lowercase, mut digits, mut special) = (12, false, false, false, false);
+        if args.len() < 1{
+            return Ok(Config::default());
+        }
+        len = args[1].parse::<i32>().unwrap_or(len);
+        if args.contains(&"-p".to_string()){
+            (uppercase, lowercase, digits, special) = (false, false, false, false);
+            let pool_i = args.iter().position(|x| {x == "-p"}).unwrap().to_owned();
+            let pool = &args[pool_i + 1];
+            if pool.contains(&"u".to_string()){uppercase = true}
+            if pool.contains(&"l".to_string()){lowercase = true}
+            if pool.contains(&"d".to_string()){digits = true}
+            if pool.contains(&"s".to_string()){special = true}
+        }
+        
+
+        return Ok(Config::new(len, uppercase, lowercase, digits, special));
+    }
+}
+
+impl Display for Config{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "length: {}, character pool: [{}]", self.len, self.chars.join(""))
+    }
+}
+
+impl Default for Config{
+    fn default() -> Self {
+        Config::new(12, true, true, true, false)
     }
 }
