@@ -14,16 +14,14 @@ const SPECIAL: [&'static str; 9] = ["!", "$", "%", "(", ")", "/", "#", "+", "?"]
 pub fn generate_pass<'a>(config: &'a Config) -> String{
     //Generate the random string
 
-    let out: Vec<&'static str>  = config.chars.choose_multiple(
-        &mut rand::thread_rng(),
-        config.len.try_into().unwrap_or_else(|_| {
-            // Handle Error case if no valid USIZE is provided for password length
-            eprintln!("No valid length provided. Expected usize but got {}. Defaulting to 16", config.len);
-            16
-        }))
-        .map(|x| {x.to_owned()})
-        .collect();
-    out.join("")
+    let mut out: String = String::new();
+    for i in 0..config.len.clone(){
+        out.push(
+            config.chars.choose(&mut rand::thread_rng()).unwrap().to_owned().to_owned().chars().next().expect("Something went wrong")
+        );
+    }
+
+    out
 }
 
 pub fn format_pass(pass: String, entropy: f64) -> String{
